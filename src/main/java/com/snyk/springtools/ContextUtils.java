@@ -3,6 +3,8 @@ package com.snyk.springtools;
 import java.util.Arrays;
 import java.util.Map;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ApplicationContext;
@@ -26,28 +28,35 @@ public class ContextUtils {
 
     public static Class<?> findApplicationInContext(ApplicationContext applicationContext) {
         Map<String, Object> candidates = applicationContext.getBeansWithAnnotation(SpringBootApplication.class);
-        
+
         if (!candidates.isEmpty()) {
             Class<?> app = candidates.values().toArray()[0].getClass();
             System.out.println("found a SpringBootApplication: " + app);
             return app;
         }
-        
+
         return null;
     }
 
     public static void printBeansInContext(ApplicationContext applicationContext) {
-        Arrays.stream(applicationContext.getBeanDefinitionNames())
-            .sorted()
-            .map(beanName -> applicationContext.getBean(beanName).getClass())
-            .forEach(System.out::println);
+        Arrays.stream(applicationContext.getBeanDefinitionNames()).sorted()
+                .map(beanName -> applicationContext.getBean(beanName).getClass()).forEach(System.out::println);
     }
 
     public static void printAllBeansUsingEndpoint(ConfigurableApplicationContext configurableApplicationContext) {
         BeansEndpoint beansEndpoint = new BeansEndpoint(configurableApplicationContext);
         
-        beansEndpoint.beans().getContexts().keySet().forEach(context -> beansEndpoint.beans().getContexts().get(context).getBeans().keySet().stream()
-            .sorted()
-            .forEach(System.out::println));
+        String json;
+        try {
+            json = new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(beansEndpoint.beans().getContexts());
+            System.out.println(json);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        
+
+        // beansEndpoint.beans().getContexts().keySet().forEach(context -> beansEndpoint.beans().getContexts().get(context).getBeans().keySet().stream()
+        //     .sorted()
+        //     .forEach(System.out::println));
     }
 }
